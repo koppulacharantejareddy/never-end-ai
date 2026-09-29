@@ -24,7 +24,16 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const raw = await response.text();
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          `Server returned ${response.status}: ${raw.slice(0, 300)}`
+        );
+      }
+
+      const data = JSON.parse(raw);
 
       if (!response.ok) {
         throw new Error(data?.error || "Something went wrong.");
@@ -79,12 +88,6 @@ export default function Home() {
               className="ne-textarea"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  askAI();
-                }
-              }}
               placeholder="Ask Never End AI anything..."
             />
 
@@ -96,11 +99,7 @@ export default function Home() {
               {loading ? "Thinking..." : "Ask Never End AI"}
             </button>
 
-            {answer && (
-              <div className="ne-answer">
-                {answer}
-              </div>
-            )}
+            {answer && <div className="ne-answer">{answer}</div>}
           </div>
         </section>
 
